@@ -5,11 +5,16 @@
 
 //#define DEBUG
 
+unsigned char pingPayload[] = "L1   ";
+//                               ^^------- recipient, always spaces for broadcast
+//                                 ^------ 5 = request our color
+
+
 #define BAND RF12_868MHZ // wireless frequency band
 #define GROUP 5     // wireless net group
 #define NODEID 30   // node id on wireless to which this sketch responds
 
-#define LAMP_ID 'G'
+#define LAMP_ID '2'
 
 #define PIN_R 3
 #define PIN_G 5
@@ -28,6 +33,13 @@ void setup () {
     Serial.println("LampRGB");
 #endif
     rf12_initialize(NODEID, BAND, GROUP);
+    pingPayload[1] = LAMP_ID;
+    pingPayload[4] = 5; // Ping
+    while (!rf12_canSend()) {
+    	rf12_recvDone();
+    }
+    rf12_sendStart(0, pingPayload, sizeof pingPayload);
+    rf12_sendWait(0);
 
     pinMode(PIN_R, OUTPUT);
     pinMode(PIN_G, OUTPUT);
@@ -49,7 +61,7 @@ void loop() {
 #endif
 	    if (rf12_crc == 0
 	                        && rf12_len >= 7
-	                        && rf12_data[2] == 'R'
+	                        && rf12_data[2] == 'L'
 	                        && rf12_data[3] == LAMP_ID) {
 	        setRGB (rf12_data[4], rf12_data[5], rf12_data[6]);
 	    }
